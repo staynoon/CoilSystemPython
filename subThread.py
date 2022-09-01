@@ -89,6 +89,7 @@ class SubThread(QThread):
                 'N/A'
                 ],
             'gripper_joystick_ctrl':['N/A', 'N/A', 'N/A', 'N/A', 'N/A'],
+            'vibrating_scissors':['Frequency (Hz)','Cutting Force (N)','Cutting Offset (N)','Vibration (N)','Vibration Offset (N)'],
             'default':['param0', 'param1', 'param2', 'param3', 'param4']
             }
         self.defaultValOnGui = {
@@ -798,5 +799,37 @@ class SubThread(QThread):
             BTotal = surgGripper.calc_field(azimuth, altitude, fieldParall)
             self.field.setXYZ(BTotal[0], BTotal[1], BTotal[2])
             # print(azimuth)
+            if self.stopped:
+                return
+
+    def vibrating_scissors(self):
+        startTime = time.time()
+        while True:
+            t = time.time() - startTime
+            
+            ramp_up_time = 10
+
+            if t < ramp_up_time:
+                X1_Voltage = (16.2489*self.params[2]*t)/ramp_up_time - (101.6379*self.params[4]*t)/ramp_up_time + (8.1245*self.params[1]*t*sin(2*pi*self.params[0]*t))/ramp_up_time - (50.8189*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+                X2_Voltage = (16.2489*self.params[2]*t)/ramp_up_time + (101.6379*self.params[4]*t)/ramp_up_time + (8.1245*self.params[1]*t*sin(2*pi*self.params[0]*t))/ramp_up_time + (50.8189*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+                Y1_Voltage = (26.7199*self.params[4]*t)/ramp_up_time + (13.3599*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+                Y2_Voltage = - (26.7199*self.params[4]*t)/ramp_up_time - (13.3599*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+                Z1_Voltage = (17.0036*self.params[4]*t)/ramp_up_time + (8.5018*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+                Z2_Voltage = - (17.0036*self.params[4]*t)/ramp_up_time - (8.5018*t*self.params[3]*sin(2*pi*self.params[0]*t))/ramp_up_time
+            else:
+                X1_Voltage = (16.2489*self.params[2]*ramp_up_time)/ramp_up_time - (101.6379*self.params[4]*ramp_up_time)/ramp_up_time + (8.1245*self.params[1]*t*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time - (50.8189*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+                X2_Voltage = (16.2489*self.params[2]*ramp_up_time)/ramp_up_time + (101.6379*self.params[4]*ramp_up_time)/ramp_up_time + (8.1245*self.params[1]*t*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time + (50.8189*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+                Y1_Voltage = (26.7199*self.params[4]*ramp_up_time)/ramp_up_time + (13.3599*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+                Y2_Voltage = - (26.7199*self.params[4]*ramp_up_time)/ramp_up_time - (13.3599*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+                Z1_Voltage = (17.0036*self.params[4]*ramp_up_time)/ramp_up_time + (8.5018*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+                Z2_Voltage = - (17.0036*self.params[4]*ramp_up_time)/ramp_up_time - (8.5018*t*self.params[3]*sin(2*pi*self.params[0]*ramp_up_time))/ramp_up_time
+
+            self.field.dac.s826_aoPin(self.field.aoPinX1,X1_Voltage)
+            self.field.dac.s826_aoPin(self.field.aoPinX2,X2_Voltage)
+            self.field.dac.s826_aoPin(self.field.aoPinY1,Y1_Voltage)
+            self.field.dac.s826_aoPin(self.field.aoPinY2,Y2_Voltage)
+            self.field.dac.s826_aoPin(self.field.aoPinZ1,Z1_Voltage)
+            self.field.dac.s826_aoPin(self.field.aoPinZ2,Z2_Voltage)
+
             if self.stopped:
                 return
